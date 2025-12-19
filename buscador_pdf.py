@@ -1,7 +1,7 @@
 import os
 import pdfplumber
 import re
-from PySimpleGUI import Text, Input, Button, Multiline, FolderBrowse, Window
+import PySimpleGUI as sg   # usar namespace sg
 
 def buscar_em_pdfs(pasta, termo):
     resultados = []
@@ -19,20 +19,18 @@ def buscar_em_pdfs(pasta, termo):
                 resultados.append((arquivo, "ERRO", f"Não foi possível abrir: {e}"))
     return resultados
 
-# Layout adaptado para PySimpleGUI 5.x
 layout = [
-    [Text("Selecione a pasta dos PDFs:"), Input(key="pasta"), FolderBrowse()],
-    [Text("Digite a palavra ou número:"), Input(key="termo")],
-    [Button("Buscar", size=(10,1)), Button("Sair", size=(10,1))],
-    [Multiline(size=(100,25), key="saida", disabled=True)]
+    [sg.Text("Selecione a pasta dos PDFs:"), sg.Input(key="pasta"), sg.FolderBrowse()],
+    [sg.Text("Digite a palavra ou número:"), sg.Input(key="termo")],
+    [sg.Button("Buscar", size=(10,1)), sg.Button("Sair", size=(10,1))],
+    [sg.Multiline(size=(100,25), key="saida", disabled=True)]
 ]
 
-# Criar janela
-window = Window("Buscador de PDFs", layout, resizable=True)
+window = sg.Window("Buscador de PDFs", layout, resizable=True)
 
 while True:
     event, values = window.read()
-    if event in (None, "Sair"):  # None = janela fechada
+    if event in (sg.WIN_CLOSED, "Sair"):
         break
     if event == "Buscar":
         pasta = values["pasta"]
