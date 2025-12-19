@@ -21,7 +21,7 @@ jobs:
           pip install pdfplumber PySimpleGUI pyinstaller
 
       - name: Build EXE
-        run: pyinstaller --onefile --noconsole buscador_pdf_gui.py
+        run: pyinstaller --onefile --noconsole buscador_pdf.py
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
