@@ -19,8 +19,9 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pdfplumber PySimpleGUI pyinstaller
+          pip install pdfplumber PySimpleGUI==4.60.6 pyinstaller
 
+         
       - name: Build EXE
         run: pyinstaller --onefile --noconsole buscador_pdf.py
 
