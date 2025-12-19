@@ -19,10 +19,10 @@ def buscar_em_pdfs(pasta, termo):
                 resultados.append((arquivo, "ERRO", f"Não foi possível abrir: {e}"))
     return resultados
 
-# Layout adaptado para PySimpleGUI 5.x
+# Layout compatível com PySimpleGUI 5.x
 layout = [
-    [sg.Label("Selecione a pasta dos PDFs:"), sg.Input(key="pasta"), sg.FolderBrowse()],
-    [sg.Label("Digite a palavra ou número:"), sg.Input(key="termo")],
+    [sg.Text("Selecione a pasta dos PDFs:"), sg.Input(key="pasta"), sg.FolderBrowse()],
+    [sg.Text("Digite a palavra ou número:"), sg.Input(key="termo")],
     [sg.Button("Buscar", size=(10,1)), sg.Button("Sair", size=(10,1))],
     [sg.Multiline(size=(100,25), key="saida", disabled=True)]
 ]
