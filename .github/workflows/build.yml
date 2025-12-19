@@ -1,4 +1,4 @@
-name: Build EXE
+name: Build EXE with GUI
 
 on:
   push:
@@ -17,14 +17,14 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install pdfplumber pyinstaller
+        run: |
+          pip install pdfplumber PySimpleGUI pyinstaller
 
       - name: Build EXE
-        run: pyinstaller --onefile buscador_pdf.py
+        run: pyinstaller --onefile --noconsole buscador_pdf_gui.py
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: buscador_pdf_exe
-          path: dist/buscador_pdf.exe
-
+          path: dist/buscador_pdf_gui.exe
