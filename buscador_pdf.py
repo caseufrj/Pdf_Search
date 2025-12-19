@@ -1,7 +1,8 @@
 import os
 import pdfplumber
 import re
-import PySimpleGUI as sg   # Import correto, com maiúsculas
+import PySimpleGUI as sg
+ # Import correto, com maiúsculas
 
 def buscar_em_pdfs(pasta, termo):
     resultados = []
