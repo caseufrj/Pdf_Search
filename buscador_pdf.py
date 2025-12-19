@@ -51,3 +51,4 @@ while True:
                 print("Nenhum resultado encontrado.")
 
 window.close()
+
