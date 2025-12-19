@@ -22,8 +22,8 @@ def buscar_em_pdfs(pasta, termo):
 
 # Layout da interface
 layout = [
-    [sg.Text("Selecione a pasta dos PDFs:"), sg.InputText(key="pasta"), sg.FolderBrowse()],
-    [sg.Text("Digite a palavra ou número:"), sg.InputText(key="termo")],
+    [sg.TextElement("Selecione a pasta dos PDFs:"), sg.InputText(key="pasta"), sg.FolderBrowse()],
+    [sg.TextElement("Digite a palavra ou número:"), sg.InputText(key="termo")],
     [sg.Button("Buscar", size=(10,1)), sg.Button("Sair", size=(10,1))],
     [sg.Output(size=(100,25), key="saida")]
 ]
