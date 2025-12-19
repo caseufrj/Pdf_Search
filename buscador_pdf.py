@@ -1,8 +1,7 @@
 import os
 import pdfplumber
 import re
-import PySimpleGUI as sg
- # Import correto, com maiúsculas
+import PySimpleGUI as sg   # versão 5.x
 
 def buscar_em_pdfs(pasta, termo):
     resultados = []
@@ -20,12 +19,12 @@ def buscar_em_pdfs(pasta, termo):
                 resultados.append((arquivo, "ERRO", f"Não foi possível abrir: {e}"))
     return resultados
 
-# Layout da interface
+# Layout adaptado para PySimpleGUI 5.x
 layout = [
-    [sg.TextElement("Selecione a pasta dos PDFs:"), sg.InputText(key="pasta"), sg.FolderBrowse()],
-    [sg.TextElement("Digite a palavra ou número:"), sg.InputText(key="termo")],
+    [sg.Label("Selecione a pasta dos PDFs:"), sg.Input(key="pasta"), sg.FolderBrowse()],
+    [sg.Label("Digite a palavra ou número:"), sg.Input(key="termo")],
     [sg.Button("Buscar", size=(10,1)), sg.Button("Sair", size=(10,1))],
-    [sg.Output(size=(100,25), key="saida")]
+    [sg.Multiline(size=(100,25), key="saida", disabled=True)]
 ]
 
 # Criar janela
@@ -40,15 +39,15 @@ while True:
         termo = values["termo"]
         window["saida"].update("")  # limpa saída
         if not pasta or not termo:
-            print("⚠️ Escolha a pasta e digite o termo!")
+            window["saida"].update("⚠️ Escolha a pasta e digite o termo!\n")
         else:
             resultados = buscar_em_pdfs(pasta, termo)
             if resultados:
                 for arquivo, pagina, trecho in resultados:
-                    print(f"Arquivo: {arquivo} | Página: {pagina}")
-                    print(f"Trecho: {trecho[:200]}...\n")
-                print("✅ Busca concluída! Resultados exibidos acima.")
+                    window["saida"].print(f"Arquivo: {arquivo} | Página: {pagina}")
+                    window["saida"].print(f"Trecho: {trecho[:200]}...\n")
+                window["saida"].print("✅ Busca concluída! Resultados exibidos acima.")
             else:
-                print("Nenhum resultado encontrado.")
+                window["saida"].print("Nenhum resultado encontrado.")
 
 window.close()
