@@ -23,7 +23,8 @@ jobs:
         run: pyinstaller --onefile buscador_pdf.py
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: buscador_pdf_exe
           path: dist/buscador_pdf.exe
+
