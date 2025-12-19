@@ -28,3 +28,4 @@ jobs:
         with:
           name: buscador_pdf_exe
           path: dist/buscador_pdf_gui.exe
+
