@@ -1,7 +1,7 @@
 import os
 import pdfplumber
 import re
-import PySimpleGUI as sg   # usar namespace sg
+import PySimpleGUI as sg
 
 def buscar_em_pdfs(pasta, termo):
     resultados = []
@@ -22,7 +22,7 @@ def buscar_em_pdfs(pasta, termo):
 layout = [
     [sg.Text("Selecione a pasta dos PDFs:"), sg.Input(key="pasta"), sg.FolderBrowse()],
     [sg.Text("Digite a palavra ou número:"), sg.Input(key="termo")],
-    [sg.Button("Buscar", size=(10,1)), sg.Button("Sair", size=(10,1))],
+    [sg.Button("Buscar"), sg.Button("Sair")],
     [sg.Multiline(size=(100,25), key="saida", disabled=True)]
 ]
 
@@ -35,7 +35,7 @@ while True:
     if event == "Buscar":
         pasta = values["pasta"]
         termo = values["termo"]
-        window["saida"].update("")  # limpa saída
+        window["saida"].update("")
         if not pasta or not termo:
             window["saida"].update("⚠️ Escolha a pasta e digite o termo!\n")
         else:
