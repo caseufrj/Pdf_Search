@@ -24,8 +24,8 @@ jobs:
       - name: Clean previous builds
         shell: pwsh
         run: |
-          Remove-Item -Recurse -Force build, dist
-          Remove-Item -Force *.spec
+          Remove-Item -Recurse -Force build, dist -ErrorAction SilentlyContinue
+          Remove-Item -Force *.spec -ErrorAction SilentlyContinue
 
       - name: Build EXE
         run: pyinstaller --onefile --noconsole buscador_pdf.py
