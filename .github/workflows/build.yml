@@ -16,10 +16,13 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
+      - name: Install dependencies from private PySimpleGUI server
         run: |
           python -m pip install --upgrade pip
-          pip install pdfplumber PySimpleGUI==5.0.8.3 pyinstaller
+          python -m pip uninstall -y PySimpleGUI
+          python -m pip cache purge
+          python -m pip install --upgrade --extra-index-url https://PySimpleGUI.net/install PySimpleGUI
+          python -m pip install pdfplumber pyinstaller
 
       - name: Debug PySimpleGUI
         run: |
