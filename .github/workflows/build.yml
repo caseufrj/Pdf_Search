@@ -24,10 +24,6 @@ jobs:
           python -m pip install --upgrade --extra-index-url https://PySimpleGUI.net/install PySimpleGUI
           python -m pip install pdfplumber pyinstaller
 
-      - name: Debug PySimpleGUI
-        run: |
-          python -c "import PySimpleGUI as sg; print('PySimpleGUI version:', sg.version); print('Available attributes:', dir(sg))"
-
       - name: Clean previous builds
         shell: pwsh
         run: |
