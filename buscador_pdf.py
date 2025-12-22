@@ -1,11 +1,14 @@
 import os
-import pdfplumber
 import re
+import pdfplumber
+from pdf2image import convert_from_path
+import pytesseract
 import PySimpleGUI as sg
 
 def buscar_em_pdfs(pasta, termo):
     resultados = []
-    padrao = re.compile(rf"\b{re.escape(termo)}\b", re.IGNORECASE)
+    padrao = re.compile(re.escape(termo), re.IGNORECASE)
+
     for arquivo in os.listdir(pasta):
         if arquivo.lower().endswith(".pdf"):
             caminho = os.path.join(pasta, arquivo)
@@ -13,8 +16,15 @@ def buscar_em_pdfs(pasta, termo):
                 with pdfplumber.open(caminho) as pdf:
                     for i, pagina in enumerate(pdf.pages):
                         texto = pagina.extract_text()
-                        if texto and padrao.search(texto):
-                            resultados.append((arquivo, i+1, texto))
+                        if texto:
+                            texto_limpo = texto.replace("\n", " ").strip()
+                        else:
+                            # Se não há texto, usa OCR
+                            imagens = convert_from_path(caminho, first_page=i+1, last_page=i+1)
+                            texto_limpo = pytesseract.image_to_string(imagens[0], lang="por")  # OCR em português
+
+                        if padrao.search(texto_limpo):
+                            resultados.append((arquivo, i+1, texto_limpo))
             except Exception as e:
                 resultados.append((arquivo, "ERRO", f"Não foi possível abrir: {e}"))
     return resultados
@@ -26,7 +36,7 @@ layout = [
     [sg.Multiline(size=(100,25), key="saida", disabled=True)]
 ]
 
-window = sg.Window("Buscador de PDFs", layout, resizable=True)
+window = sg.Window("Buscador de PDFs com OCR", layout, resizable=True)
 
 while True:
     event, values = window.read()
