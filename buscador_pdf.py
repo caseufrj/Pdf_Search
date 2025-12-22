@@ -13,7 +13,7 @@ def normalizar(texto):
     """Remove acentos e coloca em minúsculas para comparação robusta"""
     return unicodedata.normalize("NFKD", texto).encode("ASCII", "ignore").decode("ASCII").lower()
 
-def buscar_em_pdfs(pasta, termo):
+def buscar_em_pdfs(pasta, termo, window):
     resultados = []
     termo_normalizado = normalizar(termo)
 
@@ -29,6 +29,11 @@ def buscar_em_pdfs(pasta, termo):
                             imagens = convert_from_path(caminho, first_page=i+1, last_page=i+1)
                             texto = pytesseract.image_to_string(imagens[0], lang="por")
                         texto_limpo = texto.replace("\n", " ").strip()
+
+                        # DEBUG: mostra o texto extraído
+                        window["saida"].print(f"[DEBUG] Arquivo: {arquivo} | Página: {i+1}")
+                        window["saida"].print(texto_limpo[:500] + "\n")
+
                         texto_normalizado = normalizar(texto_limpo)
                         if termo_normalizado in texto_normalizado:
                             resultados.append((arquivo, i+1, texto_limpo))
@@ -41,10 +46,10 @@ layout = [
     [sg.Text("Selecione a pasta dos PDFs:"), sg.Input(key="pasta"), sg.FolderBrowse()],
     [sg.Text("Digite a palavra ou número:"), sg.Input(key="termo")],
     [sg.Button("Buscar"), sg.Button("Sair")],
-    [sg.Multiline(size=(100,25), key="saida", disabled=True)]
+    [sg.Multiline(size=(100,25), key="saida", disabled=False)]
 ]
 
-window = sg.Window("Buscador de PDFs com OCR", layout, resizable=True)
+window = sg.Window("Buscador de PDFs com OCR (Debug)", layout, resizable=True)
 
 while True:
     event, values = window.read()
@@ -57,7 +62,7 @@ while True:
         if not pasta or not termo:
             window["saida"].update("⚠️ Escolha a pasta e digite o termo!\n")
         else:
-            resultados = buscar_em_pdfs(pasta, termo)
+            resultados = buscar_em_pdfs(pasta, termo, window)
             if resultados:
                 for arquivo, pagina, trecho in resultados:
                     window["saida"].print(f"📄 Arquivo: {arquivo} | Página: {pagina}")
