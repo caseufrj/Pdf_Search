@@ -1,13 +1,21 @@
 import os
 import re
 import pdfplumber
-from pdf2image import convert_from_path
 import pytesseract
+import unicodedata
+from pdf2image import convert_from_path
 import PySimpleGUI as sg
+
+# Caminho do Tesseract no Windows (ajuste se necessário)
+pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+
+def normalizar(texto):
+    """Remove acentos e coloca em minúsculas para comparação robusta"""
+    return unicodedata.normalize("NFKD", texto).encode("ASCII", "ignore").decode("ASCII").lower()
 
 def buscar_em_pdfs(pasta, termo):
     resultados = []
-    padrao = re.compile(re.escape(termo), re.IGNORECASE)
+    termo_normalizado = normalizar(termo)
 
     for arquivo in os.listdir(pasta):
         if arquivo.lower().endswith(".pdf"):
@@ -16,19 +24,19 @@ def buscar_em_pdfs(pasta, termo):
                 with pdfplumber.open(caminho) as pdf:
                     for i, pagina in enumerate(pdf.pages):
                         texto = pagina.extract_text()
-                        if texto:
-                            texto_limpo = texto.replace("\n", " ").strip()
-                        else:
-                            # Se não há texto, usa OCR
+                        if not texto:
+                            # OCR se não houver texto
                             imagens = convert_from_path(caminho, first_page=i+1, last_page=i+1)
-                            texto_limpo = pytesseract.image_to_string(imagens[0], lang="por")  # OCR em português
-
-                        if padrao.search(texto_limpo):
+                            texto = pytesseract.image_to_string(imagens[0], lang="por")
+                        texto_limpo = texto.replace("\n", " ").strip()
+                        texto_normalizado = normalizar(texto_limpo)
+                        if termo_normalizado in texto_normalizado:
                             resultados.append((arquivo, i+1, texto_limpo))
             except Exception as e:
                 resultados.append((arquivo, "ERRO", f"Não foi possível abrir: {e}"))
     return resultados
 
+# Interface gráfica
 layout = [
     [sg.Text("Selecione a pasta dos PDFs:"), sg.Input(key="pasta"), sg.FolderBrowse()],
     [sg.Text("Digite a palavra ou número:"), sg.Input(key="termo")],
@@ -52,7 +60,7 @@ while True:
             resultados = buscar_em_pdfs(pasta, termo)
             if resultados:
                 for arquivo, pagina, trecho in resultados:
-                    window["saida"].print(f"Arquivo: {arquivo} | Página: {pagina}")
+                    window["saida"].print(f"📄 Arquivo: {arquivo} | Página: {pagina}")
                     window["saida"].print(f"Trecho: {trecho[:200]}...\n")
                 window["saida"].print("✅ Busca concluída! Resultados exibidos acima.")
             else:
