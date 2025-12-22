@@ -21,6 +21,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install pdfplumber PySimpleGUI==5.0.8.3 pyinstaller
 
+      - name: Debug PySimpleGUI
+        run: |
+          python -c "import PySimpleGUI as sg; print('PySimpleGUI version:', sg.version); print('Available attributes:', dir(sg))"
+
       - name: Clean previous builds
         shell: pwsh
         run: |
