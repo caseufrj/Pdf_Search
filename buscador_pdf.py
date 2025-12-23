@@ -41,8 +41,8 @@ def buscar_em_pdfs(pasta, termo, window):
                     window["saida"].print(f"[DEBUG] Arquivo: {arquivo} | Origem: Texto embutido")
                     window["saida"].print(texto_pdfminer[:300] + "\n")
 
-                    # Só adiciona se encontrou o termo
-                    if termo.lower() in texto_pdfminer.lower():
+                    # Normaliza texto e compara
+                    if termo_normalizado in limpar_ocr(normalizar(texto_pdfminer)):
                         trecho = destacar_termo(texto_pdfminer[:200], termo)
                         resultados.append((arquivo, "?", trecho, "Texto embutido"))
                     continue
@@ -61,7 +61,7 @@ def buscar_em_pdfs(pasta, termo, window):
                         window["saida"].print(f"[DEBUG] Arquivo: {arquivo} | Página: {i+1} | Origem: {origem}")
                         window["saida"].print(texto_limpo[:300] + "\n")
 
-                        # Só adiciona se encontrou o termo
+                        # Normaliza texto e compara
                         texto_normalizado = limpar_ocr(normalizar(texto_limpo))
                         if termo_normalizado in texto_normalizado:
                             trecho = destacar_termo(texto_limpo[:200], termo)
