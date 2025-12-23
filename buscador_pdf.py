@@ -5,8 +5,10 @@ import unicodedata
 import re
 from pdf2image import convert_from_path
 from PIL import Image, ImageEnhance, ImageFilter
+from pdfminer.high_level import extract_text
 import PySimpleGUI as sg
 
+# Caminho do Tesseract no Windows
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 def normalizar(texto):
@@ -29,6 +31,13 @@ def buscar_em_pdfs(pasta, termo, window):
         if arquivo.lower().endswith(".pdf"):
             caminho = os.path.join(pasta, arquivo)
             try:
+                # 1️⃣ Tenta extrair texto direto com pdfminer
+                texto_pdfminer = extract_text(caminho)
+                if texto_pdfminer and termo.lower() in texto_pdfminer.lower():
+                    resultados.append((arquivo, "?", texto_pdfminer[:200]))
+                    continue  # já achou, não precisa OCR
+
+                # 2️⃣ Se não achou, tenta com pdfplumber + OCR
                 with pdfplumber.open(caminho) as pdf:
                     for i, pagina in enumerate(pdf.pages):
                         texto = pagina.extract_text()
@@ -48,6 +57,7 @@ def buscar_em_pdfs(pasta, termo, window):
                 resultados.append((arquivo, "ERRO", f"Não foi possível abrir: {e}"))
     return resultados
 
+# Interface gráfica
 layout = [
     [sg.Text("Selecione a pasta dos PDFs:"), sg.Input(key="pasta"), sg.FolderBrowse()],
     [sg.Text("Digite a palavra ou número:"), sg.Input(key="termo")],
@@ -55,7 +65,7 @@ layout = [
     [sg.Multiline(size=(100,25), key="saida", disabled=False)]
 ]
 
-window = sg.Window("Buscador de PDFs com OCR (Pré-processamento)", layout, resizable=True)
+window = sg.Window("Buscador de PDFs com OCR + pdfminer", layout, resizable=True)
 
 while True:
     event, values = window.read()
