@@ -7,19 +7,15 @@ from pdf2image import convert_from_path
 from PIL import Image, ImageEnhance, ImageFilter
 import PySimpleGUI as sg
 
-# Caminho do Tesseract no Windows (ajuste se necessário)
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 def normalizar(texto):
-    """Remove acentos e coloca em minúsculas"""
     return unicodedata.normalize("NFKD", texto).encode("ASCII", "ignore").decode("ASCII").lower()
 
 def limpar_ocr(texto):
-    """Remove espaços e caracteres não alfanuméricos para corrigir OCR embaralhado"""
     return re.sub(r'[^a-zA-Z0-9]', '', texto).lower()
 
 def preprocessar(imagem):
-    """Pré-processa a imagem para melhorar OCR"""
     img = imagem.convert("L")  # escala de cinza
     img = ImageEnhance.Contrast(img).enhance(2)  # aumenta contraste
     img = img.filter(ImageFilter.MedianFilter())  # reduz ruído
@@ -37,12 +33,11 @@ def buscar_em_pdfs(pasta, termo, window):
                     for i, pagina in enumerate(pdf.pages):
                         texto = pagina.extract_text()
                         if not texto:
-                            # OCR com pré-processamento
                             imagens = convert_from_path(caminho, dpi=300, first_page=i+1, last_page=i+1)
                             texto = pytesseract.image_to_string(preprocessar(imagens[0]), lang="por")
                         texto_limpo = texto.replace("\n", " ").strip()
 
-                        # DEBUG: mostra o texto extraído
+                        # DEBUG
                         window["saida"].print(f"[DEBUG] Arquivo: {arquivo} | Página: {i+1}")
                         window["saida"].print(texto_limpo[:300] + "\n")
 
@@ -53,7 +48,6 @@ def buscar_em_pdfs(pasta, termo, window):
                 resultados.append((arquivo, "ERRO", f"Não foi possível abrir: {e}"))
     return resultados
 
-# Interface gráfica
 layout = [
     [sg.Text("Selecione a pasta dos PDFs:"), sg.Input(key="pasta"), sg.FolderBrowse()],
     [sg.Text("Digite a palavra ou número:"), sg.Input(key="termo")],
