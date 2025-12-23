@@ -1,4 +1,5 @@
 import os
+import csv
 import pdfplumber
 import pytesseract
 import unicodedata
@@ -8,7 +9,6 @@ from PIL import Image, ImageEnhance, ImageFilter
 from pdfminer.high_level import extract_text
 import PySimpleGUI as sg
 
-# Caminho do Tesseract no Windows
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 def normalizar(texto):
@@ -18,9 +18,9 @@ def limpar_ocr(texto):
     return re.sub(r'[^a-zA-Z0-9]', '', texto).lower()
 
 def preprocessar(imagem):
-    img = imagem.convert("L")  # escala de cinza
-    img = ImageEnhance.Contrast(img).enhance(2)  # aumenta contraste
-    img = img.filter(ImageFilter.MedianFilter())  # reduz ruído
+    img = imagem.convert("L")
+    img = ImageEnhance.Contrast(img).enhance(2)
+    img = img.filter(ImageFilter.MedianFilter())
     return img
 
 def buscar_em_pdfs(pasta, termo, window):
@@ -31,41 +31,48 @@ def buscar_em_pdfs(pasta, termo, window):
         if arquivo.lower().endswith(".pdf"):
             caminho = os.path.join(pasta, arquivo)
             try:
-                # 1️⃣ Tenta extrair texto direto com pdfminer
                 texto_pdfminer = extract_text(caminho)
                 if texto_pdfminer and termo.lower() in texto_pdfminer.lower():
-                    resultados.append((arquivo, "?", texto_pdfminer[:200]))
-                    continue  # já achou, não precisa OCR
+                    resultados.append((arquivo, "?", texto_pdfminer[:200], "Texto embutido"))
+                    continue
 
-                # 2️⃣ Se não achou, tenta com pdfplumber + OCR
                 with pdfplumber.open(caminho) as pdf:
                     for i, pagina in enumerate(pdf.pages):
                         texto = pagina.extract_text()
+                        origem = "Texto embutido"
                         if not texto:
                             imagens = convert_from_path(caminho, dpi=300, first_page=i+1, last_page=i+1)
                             texto = pytesseract.image_to_string(preprocessar(imagens[0]), lang="por")
+                            origem = "OCR"
                         texto_limpo = texto.replace("\n", " ").strip()
 
-                        # DEBUG
-                        window["saida"].print(f"[DEBUG] Arquivo: {arquivo} | Página: {i+1}")
+                        window["saida"].print(f"[DEBUG] Arquivo: {arquivo} | Página: {i+1} | Origem: {origem}")
                         window["saida"].print(texto_limpo[:300] + "\n")
 
                         texto_normalizado = limpar_ocr(normalizar(texto_limpo))
                         if termo_normalizado in texto_normalizado:
-                            resultados.append((arquivo, i+1, texto_limpo))
+                            resultados.append((arquivo, i+1, texto_limpo, origem))
             except Exception as e:
-                resultados.append((arquivo, "ERRO", f"Não foi possível abrir: {e}"))
+                resultados.append((arquivo, "ERRO", f"Não foi possível abrir: {e}", "Erro"))
     return resultados
 
-# Interface gráfica
+def exportar_csv(resultados, filename):
+    with open(filename, mode="w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["Arquivo", "Página", "Trecho", "Origem"])
+        for arquivo, pagina, trecho, origem in resultados:
+            writer.writerow([arquivo, pagina, trecho, origem])
+
 layout = [
     [sg.Text("Selecione a pasta dos PDFs:"), sg.Input(key="pasta"), sg.FolderBrowse()],
     [sg.Text("Digite a palavra ou número:"), sg.Input(key="termo")],
-    [sg.Button("Buscar"), sg.Button("Sair")],
+    [sg.Button("Buscar"), sg.Button("Exportar CSV"), sg.Button("Sair")],
     [sg.Multiline(size=(100,25), key="saida", disabled=False)]
 ]
 
 window = sg.Window("Buscador de PDFs com OCR + pdfminer", layout, resizable=True)
+
+resultados = []
 
 while True:
     event, values = window.read()
@@ -80,11 +87,19 @@ while True:
         else:
             resultados = buscar_em_pdfs(pasta, termo, window)
             if resultados:
-                for arquivo, pagina, trecho in resultados:
-                    window["saida"].print(f"📄 Arquivo: {arquivo} | Página: {pagina}")
+                for arquivo, pagina, trecho, origem in resultados:
+                    window["saida"].print(f"📄 Arquivo: {arquivo} | Página: {pagina} | Origem: {origem}")
                     window["saida"].print(f"Trecho: {trecho[:200]}...\n")
                 window["saida"].print("✅ Busca concluída! Resultados exibidos acima.")
             else:
                 window["saida"].print("Nenhum resultado encontrado.")
+    if event == "Exportar CSV":
+        if resultados:
+            filename = sg.popup_get_file("Salvar resultados como...", save_as=True, file_types=(("CSV Files","*.csv"),))
+            if filename:
+                exportar_csv(resultados, filename)
+                window["saida"].print(f"📂 Resultados exportados para '{filename}'.")
+        else:
+            window["saida"].print("⚠️ Nenhum resultado para exportar.")
 
 window.close()
