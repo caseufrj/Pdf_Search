@@ -4,6 +4,7 @@ import pytesseract
 import unicodedata
 import re
 from pdf2image import convert_from_path
+from PIL import Image, ImageEnhance, ImageFilter
 import PySimpleGUI as sg
 
 # Caminho do Tesseract no Windows (ajuste se necessário)
@@ -17,6 +18,13 @@ def limpar_ocr(texto):
     """Remove espaços e caracteres não alfanuméricos para corrigir OCR embaralhado"""
     return re.sub(r'[^a-zA-Z0-9]', '', texto).lower()
 
+def preprocessar(imagem):
+    """Pré-processa a imagem para melhorar OCR"""
+    img = imagem.convert("L")  # escala de cinza
+    img = ImageEnhance.Contrast(img).enhance(2)  # aumenta contraste
+    img = img.filter(ImageFilter.MedianFilter())  # reduz ruído
+    return img
+
 def buscar_em_pdfs(pasta, termo, window):
     resultados = []
     termo_normalizado = limpar_ocr(normalizar(termo))
@@ -29,9 +37,9 @@ def buscar_em_pdfs(pasta, termo, window):
                     for i, pagina in enumerate(pdf.pages):
                         texto = pagina.extract_text()
                         if not texto:
-                            # OCR se não houver texto
-                            imagens = convert_from_path(caminho, first_page=i+1, last_page=i+1)
-                            texto = pytesseract.image_to_string(imagens[0], lang="por")
+                            # OCR com pré-processamento
+                            imagens = convert_from_path(caminho, dpi=300, first_page=i+1, last_page=i+1)
+                            texto = pytesseract.image_to_string(preprocessar(imagens[0]), lang="por")
                         texto_limpo = texto.replace("\n", " ").strip()
 
                         # DEBUG: mostra o texto extraído
@@ -53,7 +61,7 @@ layout = [
     [sg.Multiline(size=(100,25), key="saida", disabled=False)]
 ]
 
-window = sg.Window("Buscador de PDFs com OCR (Robusto)", layout, resizable=True)
+window = sg.Window("Buscador de PDFs com OCR (Pré-processamento)", layout, resizable=True)
 
 while True:
     event, values = window.read()
