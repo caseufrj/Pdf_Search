@@ -23,6 +23,10 @@ def preprocessar(imagem):
     img = img.filter(ImageFilter.MedianFilter())
     return img
 
+def destacar_termo(texto, termo):
+    # Destaca o termo encontrado no trecho
+    return re.sub(f"({re.escape(termo)})", r">>>\1<<<", texto, flags=re.IGNORECASE)
+
 def buscar_em_pdfs(pasta, termo, window):
     resultados = []
     termo_normalizado = limpar_ocr(normalizar(termo))
@@ -32,8 +36,15 @@ def buscar_em_pdfs(pasta, termo, window):
             caminho = os.path.join(pasta, arquivo)
             try:
                 texto_pdfminer = extract_text(caminho)
-                if texto_pdfminer and termo.lower() in texto_pdfminer.lower():
-                    resultados.append((arquivo, "?", texto_pdfminer[:200], "Texto embutido"))
+                if texto_pdfminer:
+                    # DEBUG sempre mostra
+                    window["saida"].print(f"[DEBUG] Arquivo: {arquivo} | Origem: Texto embutido")
+                    window["saida"].print(texto_pdfminer[:300] + "\n")
+
+                    # Só adiciona se encontrou o termo
+                    if termo.lower() in texto_pdfminer.lower():
+                        trecho = destacar_termo(texto_pdfminer[:200], termo)
+                        resultados.append((arquivo, "?", trecho, "Texto embutido"))
                     continue
 
                 with pdfplumber.open(caminho) as pdf:
@@ -46,14 +57,17 @@ def buscar_em_pdfs(pasta, termo, window):
                             origem = "OCR"
                         texto_limpo = texto.replace("\n", " ").strip()
 
+                        # DEBUG sempre mostra
                         window["saida"].print(f"[DEBUG] Arquivo: {arquivo} | Página: {i+1} | Origem: {origem}")
                         window["saida"].print(texto_limpo[:300] + "\n")
 
+                        # Só adiciona se encontrou o termo
                         texto_normalizado = limpar_ocr(normalizar(texto_limpo))
                         if termo_normalizado in texto_normalizado:
-                            resultados.append((arquivo, i+1, texto_limpo, origem))
+                            trecho = destacar_termo(texto_limpo[:200], termo)
+                            resultados.append((arquivo, i+1, trecho, origem))
             except Exception as e:
-                resultados.append((arquivo, "ERRO", f"Não foi possível abrir: {e}", "Erro"))
+                window["saida"].print(f"[DEBUG] Erro ao abrir {arquivo}: {e}")
     return resultados
 
 def exportar_csv(resultados, filename):
@@ -89,7 +103,7 @@ while True:
             if resultados:
                 for arquivo, pagina, trecho, origem in resultados:
                     window["saida"].print(f"📄 Arquivo: {arquivo} | Página: {pagina} | Origem: {origem}")
-                    window["saida"].print(f"Trecho: {trecho[:200]}...\n")
+                    window["saida"].print(f"Trecho: {trecho}\n")
                 window["saida"].print("✅ Busca concluída! Resultados exibidos acima.")
             else:
                 window["saida"].print("Nenhum resultado encontrado.")
@@ -97,6 +111,8 @@ while True:
         if resultados:
             filename = sg.popup_get_file("Salvar resultados como...", save_as=True, file_types=(("CSV Files","*.csv"),))
             if filename:
+                if not filename.lower().endswith(".csv"):
+                    filename += ".csv"
                 exportar_csv(resultados, filename)
                 window["saida"].print(f"📂 Resultados exportados para '{filename}'.")
         else:
