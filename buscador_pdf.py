@@ -1,8 +1,8 @@
 import os
-import re
 import pdfplumber
 import pytesseract
 import unicodedata
+import re
 from pdf2image import convert_from_path
 import PySimpleGUI as sg
 
@@ -10,12 +10,16 @@ import PySimpleGUI as sg
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 def normalizar(texto):
-    """Remove acentos e coloca em minúsculas para comparação robusta"""
+    """Remove acentos e coloca em minúsculas"""
     return unicodedata.normalize("NFKD", texto).encode("ASCII", "ignore").decode("ASCII").lower()
+
+def limpar_ocr(texto):
+    """Remove espaços e caracteres não alfanuméricos para corrigir OCR embaralhado"""
+    return re.sub(r'[^a-zA-Z0-9]', '', texto).lower()
 
 def buscar_em_pdfs(pasta, termo, window):
     resultados = []
-    termo_normalizado = normalizar(termo)
+    termo_normalizado = limpar_ocr(normalizar(termo))
 
     for arquivo in os.listdir(pasta):
         if arquivo.lower().endswith(".pdf"):
@@ -32,9 +36,9 @@ def buscar_em_pdfs(pasta, termo, window):
 
                         # DEBUG: mostra o texto extraído
                         window["saida"].print(f"[DEBUG] Arquivo: {arquivo} | Página: {i+1}")
-                        window["saida"].print(texto_limpo[:500] + "\n")
+                        window["saida"].print(texto_limpo[:300] + "\n")
 
-                        texto_normalizado = normalizar(texto_limpo)
+                        texto_normalizado = limpar_ocr(normalizar(texto_limpo))
                         if termo_normalizado in texto_normalizado:
                             resultados.append((arquivo, i+1, texto_limpo))
             except Exception as e:
@@ -49,7 +53,7 @@ layout = [
     [sg.Multiline(size=(100,25), key="saida", disabled=False)]
 ]
 
-window = sg.Window("Buscador de PDFs com OCR (Debug)", layout, resizable=True)
+window = sg.Window("Buscador de PDFs com OCR (Robusto)", layout, resizable=True)
 
 while True:
     event, values = window.read()
