@@ -16,16 +16,21 @@ jobs:
         with:
           python-version: '3.11'
 
+      # Instala o Tesseract OCR no runner Windows
       - name: Install Tesseract OCR
         run: choco install -y tesseract
 
+      # Adiciona o Tesseract ao PATH
       - name: Add Tesseract to PATH
         run: echo "C:\Program Files\Tesseract-OCR" | Out-File -Append -FilePath $env:GITHUB_PATH
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install PySimpleGUI pdfplumber pdf2image pytesseract pyinstaller
+          python -m pip uninstall -y PySimpleGUI
+          python -m pip cache purge
+          python -m pip install --upgrade --extra-index-url https://PySimpleGUI.net/install PySimpleGUI
+          python -m pip install pdfplumber pdf2image pytesseract pyinstaller
 
       - name: Clean previous builds
         shell: pwsh
